@@ -16,8 +16,8 @@ public class PaymentServiceImpl implements PaymentService {
 
     @Override
     @Transactional(propagation = Propagation.MANDATORY)
-    public PaymentEntity bookPayment(PaymentEntity paymentEntity) {
+    public void bookPayment(PaymentEntity paymentEntity) {
 
-        return paymentRepository.save(paymentEntity);
+        paymentRepository.save(paymentEntity);
     }
 }
