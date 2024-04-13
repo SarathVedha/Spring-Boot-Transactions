@@ -6,13 +6,14 @@ import com.vedha.entity.OrderEntity;
 import com.vedha.entity.PaymentEntity;
 import com.vedha.exception.PaymentException;
 import com.vedha.repository.OrderRepository;
-import com.vedha.repository.PaymentRepository;
 import com.vedha.service.OrderService;
+import com.vedha.service.PaymentService;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Propagation;
 import org.springframework.transaction.annotation.Transactional;
 
+import java.util.List;
 import java.util.UUID;
 
 @Slf4j
@@ -21,15 +22,16 @@ public class OrderServiceImpl implements OrderService {
 
     private final OrderRepository orderRepository;
 
-    private final PaymentRepository paymentRepository;
+    private final PaymentService paymentService;
 
-    public OrderServiceImpl(OrderRepository orderRepository, PaymentRepository paymentRepository) {
+    public OrderServiceImpl(OrderRepository orderRepository, PaymentService paymentService) {
         this.orderRepository = orderRepository;
-        this.paymentRepository = paymentRepository;
+        this.paymentService = paymentService;
     }
 
     @Override
-    @Transactional(rollbackFor = {PaymentException.class}, noRollbackFor = {RuntimeException.class}, propagation = Propagation.REQUIRED) // This annotation is used to make sure that both the operations are done in a single transaction and if any of the operation fails, the transaction will be rolled back.
+    @Transactional(rollbackFor = {PaymentException.class}, noRollbackFor = {RuntimeException.class},
+            propagation = Propagation.REQUIRED) // This annotation is used to make sure that both the operations are done in a single transaction and if any of the operation fails, the transaction will be rolled back.
     // This is used to make sure that the data is consistent in the database.
     // If the transaction is successful, the data will be committed to the database.
     // If the transaction fails, the data will be rolled back to the previous state.
@@ -53,7 +55,7 @@ public class OrderServiceImpl implements OrderService {
             }
 
             paymentEntity.setOrderId(order.getId());
-            paymentRepository.save(paymentEntity);
+            paymentService.bookPayment(paymentEntity);
 
             OrderResponseDTO orderResponseDTO = new OrderResponseDTO();
             orderResponseDTO.setOrderTrackingNumber(order.getOrderTrackingNumber());
@@ -67,5 +69,13 @@ public class OrderServiceImpl implements OrderService {
 //            throw new PaymentException("Payment Failed!!");
 //        }
 
+    }
+
+    @Override
+    public List<OrderEntity> getAllOrders() {
+
+        List<OrderEntity> all = orderRepository.findAll();
+        if(all.isEmpty()) throw new RuntimeException("No Orders Found!!");
+        return all;
     }
 }
